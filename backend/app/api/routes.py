@@ -52,7 +52,6 @@ router = APIRouter(prefix="/api")
 @router.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
     mode, model, device, _ = depth_service.get_depth_mode()
-    demo_exists = bool(settings.demo_image_path and settings.demo_image_path.exists())
     return HealthResponse(
         status="ok",
         service=settings.app_name,
@@ -60,7 +59,6 @@ def health() -> HealthResponse:
         depth_mode=mode,
         model_name=model,
         device=device or "cpu",
-        demo_file=str(settings.demo_image_path) if demo_exists else None,
     )
 
 
@@ -78,25 +76,6 @@ async def upload(file: UploadFile = File(...)) -> UploadResponse:
         raise HTTPException(status_code=400, detail=str(exc))
     img.close()
     return _register_job(data, original)
-
-
-@router.post("/demo", response_model=UploadResponse, tags=["jobs"])
-async def demo_job() -> UploadResponse:
-    """Create a job from the bundled synthetic demo image (no upload required)."""
-    demo_path = settings.demo_image_path
-    if not demo_path.exists() or not demo_path.is_file():
-        raise HTTPException(
-            status_code=404,
-            detail="Demo image not found on server. Run "
-                   "`python demo/generate_demo_image.py` and restart the backend.",
-        )
-    data = demo_path.read_bytes()
-    try:
-        img = validate_image_bytes(data, max_mb=settings.max_upload_mb)
-    except ImageValidationError as exc:
-        raise HTTPException(status_code=500, detail=f"Demo image invalid: {exc}")
-    img.close()
-    return _register_job(data, demo_path.name)
 
 
 def _register_job(data: bytes, original: str) -> UploadResponse:
@@ -176,17 +155,14 @@ async def analyze(body: _AnalyzeBody) -> dict:
 async def depth_step(body: DepthRequest) -> DepthResponse:
     job, rgb, geo = _load_job_with_rgb(body.job_id)
     result = depth_service.estimate_depth(rgb)
-    stats = depth_service.save_depth_output(
-        result.depth_normalized, job.depth_dir, mode=result.mode
-    )
+    stats = depth_service.save_depth_output(result.depth_normalized, job.depth_dir)
     return DepthResponse(
         job_id=body.job_id,
-        mode=result.mode,
+        mode="ai",
         model_name=result.model_name,
         duration_ms=round(result.duration_ms, 2),
         statistics=stats,
-        note=("Relative depth - not metric elevation." if result.mode == "ai"
-              else "DEMO/synthetic depth - not a real measurement."),
+        note="Relative depth - not metric elevation.",
     )
 
 
@@ -338,41 +314,6 @@ async def upload_reference(file: UploadFile = File(...)) -> dict:
     except ImageValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {"path": str(path)}
-
-
-@router.post("/validate-demo", response_model=ValidateResponse, tags=["validation"])
-async def validate_demo(body: _JobBody) -> ValidateResponse:
-    """Validate a job against a synthetic demo reference (clearly labelled)."""
-    _ensure_job(body.job_id)
-    try:
-        ref_path = await run_in_threadpool(
-            reference_service.make_demo_reference_tiff, body.job_id
-        )
-        metrics, message = await run_in_threadpool(
-            validate_against_reference,
-            body.job_id,
-            None,
-            str(ref_path),
-        )
-    except ImageValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    if metrics is None:
-        return ValidateResponse(
-            job_id=body.job_id,
-            available=False,
-            metrics=None,
-            message=message or "Demo reference not available",
-        )
-    return ValidateResponse(
-        job_id=body.job_id,
-        available=True,
-        metrics=ValidationMetrics(**metrics),
-        message=(
-            "SYNTHETIC demo check - the reference is derived from this job's own "
-            "estimate with seeded noise. It verifies pipeline consistency only "
-            "and is NOT real-world accuracy."
-        ),
-    )
 
 
 # --------------------------------------------------------------------------- #

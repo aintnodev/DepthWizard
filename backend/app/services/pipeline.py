@@ -81,11 +81,11 @@ def run_pipeline(
     set_stage(ST_DEPTH, "processing", 0.25, "Running monocular depth model")
     depth_result = depth_service.estimate_depth(rgb)
     depth_stats = depth_service.save_depth_output(
-        depth_result.depth_normalized, job.depth_dir, mode=depth_result.mode
+        depth_result.depth_normalized, job.depth_dir
     )
     duration_s = round(time.perf_counter() - t_start, 2)
     set_stage(ST_DEPTH, "completed", 0.45,
-              f"Depth mode: {depth_result.mode} ({duration_s}s)")
+              f"AI depth estimation ({duration_s}s)")
 
     # --- 3: Scale Calibration ----------------------------------------------
     set_stage(ST_CALIBRATION, "processing", 0.5, "Calibration: " + mode)
@@ -133,7 +133,7 @@ def run_pipeline(
         "job_id": job_id,
         "status": "completed",
         "depth": depth_stats,
-        "depth_mode": depth_result.mode,
+        "depth_mode": "ai",
         "model_name": depth_result.model_name,
         "calibration": {
             "mode": cal.mode,

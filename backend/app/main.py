@@ -81,7 +81,6 @@ def root() -> dict:
 
 def _jobs_init() -> None:
     settings.jobs_dir.mkdir(parents=True, exist_ok=True)
-    settings.demo_image_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 @app.on_event("startup")

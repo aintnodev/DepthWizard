@@ -16,10 +16,9 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     service: str = "DEPTHWIZARD API"
     version: str = "1.0.0"
-    depth_mode: str = Field(..., description="'ai' when a real model is loaded, 'fallback' otherwise")
+    depth_mode: str = Field(..., description="'ai' when the real model is ready; 'fallback' means it could NOT be loaded (no synthetic data is ever produced)")
     model_name: Optional[str] = None
     device: str = Field(..., description="'cuda' or 'cpu'")
-    demo_file: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -37,7 +36,7 @@ class UploadResponse(BaseModel):
     bounds: Optional[list[float]] = None
     width: int
     height: int
-    mode: str = Field(..., description="'ai' or 'fallback' depth mode used for this job")
+    mode: str = Field(..., description="'ai' when the model is ready; 'fallback' means it could not be loaded and analysis will fail")
     message: Optional[str] = None
 
 

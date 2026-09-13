@@ -5,7 +5,6 @@ the defaults, e.g. in a root-level `.env` file:
 
   DW_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
   DW_MAX_UPLOAD_MB=30
-  DW_FORCE_FALLBACK=true
 """
 from __future__ import annotations
 
@@ -53,9 +52,6 @@ class Settings(BaseSettings):
 
     depth_model_name: str = "depth-anything/Depth-Anything-V2-Small-hf"
     depth_input_size: int = 518
-    force_fallback: bool = False        # force DEMO (synthetic) depth mode
-
-    demo_image_path: Path = PROJECT_ROOT / "demo" / "demo_rgb.jpg"
 
     @property
     def effective_cors(self) -> list[str]:

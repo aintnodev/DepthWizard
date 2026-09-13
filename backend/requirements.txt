@@ -14,8 +14,8 @@ scipy>=1.13.0
 scikit-image>=0.22.0
 rasterio>=1.3.10
 
-# AI model (optional at runtime -- if unavailable the API falls back to a
-# clearly-marked DEMO mode so the application can still start end-to-end)
+# AI model (required: the pipeline runs only real Depth Anything V2 inference;
+# there is no synthetic fallback any more)
 torch>=2.2.0
 transformers>=4.40.0
 safetensors>=0.4.0

@@ -9,14 +9,16 @@ Responsibilities
 * Preprocess an RGB image for inference.
 * Run inference and return a normalised relative-depth map.
 * Save the depth representation for a job.
-* Return clear statistics and a report of which mode was used.
+* Return clear statistics and the mode used.
 
-Modes
------
-* ``ai``       -> real Depth Anything V2 model produced the depth map.
-* ``fallback`` -> the model could not be loaded (no torch/transformers, no
-  weights, no network) so a carefully-labelled *synthetic* depth map is
-  produced so the application can still be demonstrated end-to-end.
+No synthetic mode
+-----------------
+Every depth map is produced by the real model. If the model cannot be loaded
+(missing torch/transformers/weights) or inference fails, the service raises
+``ModelUnavailableError`` and the job is marked as failed - no depth map is
+ever fabricated. ``GET /api/health`` reports ``depth_mode: "fallback"``
+(model unavailable) vs ``"ai"`` (model ready) so the UI can warn before
+processing.
 
 IMPORTANT SCIENTIFIC NOTE
 -------------------------
@@ -43,6 +45,14 @@ _DEPTH_PIPE = None
 _PIPE_ERROR: str | None = None
 _PIPE_MODEL: str | None = None
 _PIPE_DEVICE: str | None = None
+
+
+class ModelUnavailableError(RuntimeError):
+    """Raised when the depth model is not loaded or inference fails.
+
+    The message always contains the underlying reason so operators can fix the
+    environment (install torch/transformers, download weights, ...).
+    """
 
 
 def _torch_info():
@@ -73,10 +83,6 @@ def load_pipeline():
     if _PIPE_ERROR is not None:
         return None, _PIPE_MODEL, _PIPE_DEVICE
 
-    if settings.force_fallback:
-        _PIPE_ERROR = "forced fallback (DW_FORCE_FALLBACK=true)"
-        return None, None, "cpu"
-
     try:
         import torch  # noqa: F401
         from transformers import pipeline  # type: ignore
@@ -91,57 +97,27 @@ def load_pipeline():
         _PIPE_MODEL = model
         _PIPE_DEVICE = device
         return _DEPTH_PIPE, _PIPE_MODEL, _PIPE_DEVICE
-    except Exception as exc:  # noqa: BLE001 - record anything so we can fall back
+    except Exception as exc:  # noqa: BLE001 - record the load failure verbatim
         _PIPE_ERROR = f"{type(exc).__name__}: {exc}"
         return None, None, "cpu"
 
 
 def get_depth_mode() -> tuple[str, str | None, str | None, str | None]:
-    """Return (mode, model_name, device, error)."""
+    """Return (mode, model_name, device, error).
+
+    ``mode`` is ``"ai"`` when the real model is loaded and ``"fallback"`` when
+    it is NOT (diagnostic state only - no synthetic data is ever produced).
+    """
     pipe, model, device = load_pipeline()
     if pipe is not None:
         return "ai", model, device, None
     return "fallback", None, device, _PIPE_ERROR
-# --------------------------------------------------------------------------- #
-# Fallback / demo depth generation (synthetic, clearly labelled)
-# --------------------------------------------------------------------------- #
-def _fallback_depth(image_rgb: np.ndarray) -> np.ndarray:
-    """Create a smooth, hill-like synthetic depth map for DEMO mode.
-
-    This is deliberately NOT presented as a real measurement. It produces a
-    coherent surface so the full pipeline (DSM, slope, 3D, flythrough) can be
-    demonstrated when no pretrained model is available.
-    """
-    try:
-        from scipy.ndimage import gaussian_filter  # type: ignore
-
-        h, w = image_rgb.shape[:2]
-        rng = np.random.default_rng(int(h * 31 + w * 7) % (2**32))
-        small = np.array(
-            Image.fromarray(image_rgb).convert("L").resize((max(16, w // 48), max(16, h // 48)))
-        ).astype(np.float32)
-        small = (small - small.min()) / (small.max() - small.min() + 1e-6)
-        noise = rng.standard_normal((max(16, w // 48), max(16, h // 48))).astype(np.float32)
-        field = 0.85 * small + 0.35 * noise
-        field = gaussian_filter(field, sigma=2.5)
-        field = np.array(Image.fromarray(field).resize((w, h), Image.BILINEAR))
-        field = gaussian_filter(field, sigma=4.0)
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        ramp = 0.08 * np.sin(xx * 2 * np.pi / max(w, 1) * 2.0)
-        field = field + ramp
-        field = (field - field.min()) / (field.max() - field.min() + 1e-6)
-        return field.astype(np.float32)
-    except Exception:  # pragma: no cover - scipy always present in practice
-        h, w = image_rgb.shape[:2]
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        return ((xx / w * 0.4 + yy / h * 0.6)).astype(np.float32)
 
 
 @dataclass
 class DepthResult:
     depth_normalized: np.ndarray        # H x W float32 in [0, 1], larger = closer
     raw_depth: np.ndarray
-    mode: str                           # "ai" | "fallback"
     model_name: str | None
     device: str
     duration_ms: float
@@ -150,21 +126,24 @@ class DepthResult:
 
 
 def estimate_depth(image_rgb: np.ndarray) -> DepthResult:
-    """Estimate a normalised relative-depth map from an RGB array."""
-    pipe, model, device = load_pipeline()
-    t0 = time.perf_counter()
+    """Estimate a normalised relative-depth map from an RGB array.
 
-    if pipe is not None:
-        try:
-            raw = _run_pipeline(pipe, image_rgb)
-            mode = "ai"
-        except Exception as exc:  # noqa: BLE001 - fall back on runtime inference errors
-            _PIPE_ERROR = f"inference error -> fallback ({type(exc).__name__})"
-            raw = _fallback_depth(image_rgb)
-            mode = "fallback"
-    else:
-        raw = _fallback_depth(image_rgb)
-        mode = "fallback"
+    Raises ``ModelUnavailableError`` if the model is not loaded or inference
+    fails. There is no synthetic substitute.
+    """
+    pipe, model, device = load_pipeline()
+    if pipe is None:
+        raise ModelUnavailableError(
+            "Depth model is not available: " + (_PIPE_ERROR or "unknown reason")
+        )
+
+    t0 = time.perf_counter()
+    try:
+        raw = _run_pipeline(pipe, image_rgb)
+    except Exception as exc:  # noqa: BLE001 - surface real inference failures
+        raise ModelUnavailableError(
+            f"Depth model inference failed: {type(exc).__name__}: {exc}"
+        ) from exc
 
     raw = np.asarray(raw, dtype=np.float32)
     depth = _normalise(raw)
@@ -173,8 +152,7 @@ def estimate_depth(image_rgb: np.ndarray) -> DepthResult:
     return DepthResult(
         depth_normalized=depth,
         raw_depth=raw,
-        mode=mode,
-        model_name=model if mode == "ai" else None,
+        model_name=model,
         device=device or "cpu",
         duration_ms=elapsed_ms,
         width=int(depth.shape[1]),
@@ -234,7 +212,7 @@ def _normalise(raw: np.ndarray) -> np.ndarray:
     return ((raw - lo) / (hi - lo)).astype(np.float32)
 
 
-def save_depth_output(depth: np.ndarray, out_dir: Path, mode: str) -> dict:
+def save_depth_output(depth: np.ndarray, out_dir: Path, mode: str = "ai") -> dict:
     """Persist the depth map as PNG + NPY and return file names + statistics."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
