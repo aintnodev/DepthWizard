@@ -13,7 +13,6 @@ TEST_ROOT = Path(__file__).resolve().parent
 BACKEND_ROOT = TEST_ROOT.parent
 
 os.environ.setdefault("DW_DATA_DIR", str(TEST_ROOT / ".tmp_data"))
-os.environ.setdefault("DW_FORCE_FALLBACK", "true")
 
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))

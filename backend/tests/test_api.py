@@ -1,4 +1,9 @@
-"""End-to-end API tests using FastAPI's TestClient."""
+"""End-to-end API tests using FastAPI's TestClient.
+
+These tests run only when the real depth model is ready (see /api/health):
+there is no synthetic depth mode, so a full pipeline run requires the actual
+Depth Anything V2 weights to be loadable.
+"""
 from __future__ import annotations
 
 import io
@@ -9,6 +14,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.main import app
+from app.services import depth_estimation as depth_service
 
 client = TestClient(app)
 
@@ -26,8 +32,20 @@ class TestHealth:
         assert res.status_code == 200
         body = res.json()
         assert body["status"] == "ok"
+        # "fallback" here means the real model could not be loaded
+        # (diagnostic); no synthetic depth mode exists any more.
         assert body["depth_mode"] in ("ai", "fallback")
         assert body["device"] in ("cpu", "cuda")
+        assert "demo_file" not in body
+
+
+def _model_ready() -> bool:
+    return depth_service.get_depth_mode()[0] == "ai"
+
+
+def _skip_without_model():
+    if not _model_ready():
+        pytest.skip("Depth model not loadable in this environment")
 
 
 class TestUpload:
@@ -59,6 +77,7 @@ class TestUpload:
 
 class TestPipeline:
     def test_full_pipeline(self):
+        _skip_without_model()
         up = client.post(
             "/api/upload",
             files={"file": ("scene.png", _png_bytes(), "image/png")},
@@ -102,25 +121,12 @@ class TestValidation:
         assert body["available"] is False
         assert "not available" in body["message"].lower()
 
-    def test_demo_validation(self):
-        up = client.post(
-            "/api/upload",
-            files={"file": ("scene.png", _png_bytes(), "image/png")},
-        ).json()
-        job_id = up["job_id"]
-        client.post("/api/analyze", json={"job_id": job_id, "mode": "relative"})
-        for _ in range(100):
-            s = client.get(f"/api/statistics/{job_id}").json()
-            if s["status"] in ("completed", "error"):
-                break
-            import time
 
-            time.sleep(0.1)
+class TestDemoEndpointsRemoved:
+    def test_demo_endpoint_gone(self):
+        res = client.post("/api/demo")
+        assert res.status_code == 404
 
-        res = client.post("/api/validate-demo", json={"job_id": job_id})
-        assert res.status_code == 200
-        body = res.json()
-        assert body["available"] is True
-        assert "SYNTHETIC" in body["message"]
-        assert body["metrics"]["n_samples"] > 1000
-        assert body["metrics"]["rmse"] >= 0
+    def test_validate_demo_endpoint_gone(self):
+        res = client.post("/api/validate-demo", json={"job_id": "anything"})
+        assert res.status_code == 404

@@ -1,4 +1,4 @@
-"""Tests for depth estimation (fallback mode), DSM and slope math."""
+"""Tests for depth estimation, DSM and slope math."""
 from __future__ import annotations
 
 import numpy as np
@@ -16,21 +16,6 @@ def _rgb(h: int = 128, w: int = 128) -> np.ndarray:
 
 
 class TestDepthEstimation:
-    def test_fallback_depth_shape_and_range(self):
-        img = _rgb(96, 120)
-        res = de.estimate_depth(img)
-        assert res.mode == "fallback"  # DW_FORCE_FALLBACK=true in conftest
-        assert res.depth_normalized.shape == (96, 120)
-        assert res.depth_normalized.dtype == np.float32
-        assert res.depth_normalized.min() >= 0.0
-        assert res.depth_normalized.max() <= 1.0
-
-    def test_deterministic_for_same_input(self):
-        img = _rgb()
-        a = de.estimate_depth(img).depth_normalized
-        b = de.estimate_depth(img).depth_normalized
-        np.testing.assert_allclose(a, b, atol=1e-6)
-
     def test_depth_stats(self):
         stats = de.depth_stats(np.linspace(0, 1, 100).astype(np.float32))
         for key in ("min", "max", "mean", "median", "std"):
