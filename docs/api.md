@@ -11,6 +11,9 @@ CORS origins are configurable via `DW_CORS_ORIGINS`.
 { "status": "ok", "service": "DEPTHWIZARD API", "version": "1.0.0",
   "depth_mode": "ai | fallback", "model": "depth-anything/…", "device": "cpu | cuda" }
 ```
+`depth_mode: "fallback"` means the real model could NOT be loaded — jobs will
+fail until it is fixed; no synthetic data is ever produced.
+```
 
 ## Jobs
 
@@ -26,10 +29,6 @@ Validates extension (JPG/JPEG/PNG/TIF/TIFF), magic bytes, size ≤
   "mode": "ai | fallback", "message": "GeoTIFF detected with usable geospatial metadata." }
 ```
 Errors: `400` with a friendly message for invalid/oversized/corrupt files.
-
-### `POST /api/demo`
-Creates a job from `demo/demo_rgb.jpg` (synthetic, labelled as such).
-`404` if the demo image has not been generated.
 
 ### `POST /api/analyze`
 ```json
@@ -63,7 +62,9 @@ hillshade, slope_heatmap, mesh.json) plus full statistics.
 |---|---|---|
 | `POST /api/reference` | multipart `file` | Stores a reference DEM GeoTIFF server-side |
 | `POST /api/validate` | `{job_id?, estimated?, reference}` | RMSE / MAE / Pearson r; without reference → `{available:false, message:"Reference data not available"}` |
-| `POST /api/validate-demo` | `{job_id}` | Validates against a *synthetic* reference — message clearly contains “SYNTHETIC” |
+
+Validation always uses a **user-supplied reference GeoTIFF**; no synthetic
+references exist.
 
 ## Error handling
 

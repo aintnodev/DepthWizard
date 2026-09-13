@@ -35,14 +35,13 @@ photogrammetric product. Every claim below is binding on the demo narrative.
    stability models. They must not be used as the sole basis for emergency
    decisions.
 
-## Demo mode
+## No synthetic data
 
-9. When the AI model is unavailable, a **synthetic depth map** is used so the
-   product remains demonstrable. It is labelled `fallback`/synthetic in the
-   API, dashboard and exports. **Never present demo results as real-world
-   validated measurements.**
-10. The bundled demo image and demo validation reference are generated
-    programmatically (`demo/generate_demo_image.py`).
+9. The pipeline runs **real Depth Anything V2 inference on every job**. When
+   the model or its weights are unavailable, analysis **fails with an explicit
+   error** (`depth_mode: "fallback"` on `/api/health` means the model is NOT
+   ready) — no synthetic depth, demo images or generated references are
+   produced anywhere in the system.
 
 ## Engineering scope
 

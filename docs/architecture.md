@@ -41,10 +41,10 @@ DEPTHWIZARD is a two-tier web application with a strict separation between
 3. **Static artefact serving.** Uvicorn mounts the jobs directory at
    `/api/results` so the frontend can fetch PNGs/JSON directly by URL
    (fast, cacheable, no base64 over JSON).
-4. **Graceful AI degradation.** The depth service is a lazy singleton. If the
-   HF model cannot be downloaded/loaded, the API reports
-   `depth_mode: "fallback"` and the pipeline continues with clearly-labelled
-   synthetic depth — the product still demonstrates end-to-end.
+4. **Real inference only.** The depth service is a lazy singleton that runs
+   Depth Anything V2 on every job. If the HF model cannot be downloaded/loaded,
+   `/api/health` reports `depth_mode: "fallback"` and jobs fail with an
+   explicit error — synthetic or demo data is never substituted.
 5. **Honesty is architectural.** Calibration mode (`relative`/`dem`/`gcp`)
    flows through every layer: API responses carry `calibrated` and `units`
    flags, and the frontend renders *Relative Height – Not Metric* unless the

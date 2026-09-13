@@ -24,18 +24,18 @@ when more compute is available.
 5. **Save** — `depth_raw.npy` (data) + `depth_color.png` (visual).
 6. **Statistics** — min/max/mean/median/std + duration and mode report.
 
-## Fallback / demo mode (explicit, never hidden)
+## No synthetic fallback
 
-If torch/transformers/weights/network are unavailable, a deterministic
-synthetic depth map (smooth multi-gaussian hills seeded by image size) is
-generated so the whole product — DSM → slope → 3D → flythrough — remains
-demonstrable.
+The pipeline never fabricates data. If torch/transformers/weights/network are
+unavailable, depth estimation **raises `ModelUnavailableError`** and the job
+fails with an explicit error — no synthetic depth map is generated.
 
-- API marks it: `depth_mode: "fallback"`, `model_name: null`
-- Dashboard shows a **“Demo/synthetic depth”** badge and an explanatory note
-- Endpoint notes literally say *“DEMO/synthetic depth – not a real
-  measurement”*
-- Force it anywhere with `DW_FORCE_FALLBACK=true` (used in tests)
+- `/api/health` reports `depth_mode: "fallback"`, `model_name: null` — this is
+  a diagnostic meaning the real model is NOT ready; nothing synthetic is
+  produced in this state
+- Jobs started while the model is unavailable fail fast with a clear message
+- Fix the environment (install torch/transformers, download weights) and the
+  next job runs real inference
 
 ## Interpretation for nadir remote sensing
 

@@ -8,7 +8,7 @@ Statuses are persisted so the frontend can render the live pipeline UI
 |---|-------|--------|--------------|
 | 1 | **Image Upload** | `image_utils` | Extension + magic-byte validation, size limit, decode |
 | 2 | **Metadata Detection** | `geospatial` | Rasterio inspection: CRS/transform/resolution/bounds or “not georeferenced” |
-| 3 | **AI Depth Estimation** | `depth_estimation` | Depth Anything V2 inference (or labelled fallback); normalise to [0,1]; save `depth/depth_raw.npy` + colour PNG |
+| 3 | **AI Depth Estimation** | `depth_estimation` | Depth Anything V2 inference (fails explicitly if the model is unavailable — no synthetic substitute); normalise to [0,1]; save `depth/depth_raw.npy` + colour PNG |
 | 4 | **Scale Calibration** | `calibration` | Fit `elevation = scale · rel + offset` — mode `relative` (no-op), `dem` (reference raster) or `gcp` (point list); robust 2-pass regression |
 | 5 | **DSM Generation** | `dsm` | `rel = 1 − depth`, smooth, invalid-value cleanup, statistics + histogram; GeoTIFF export when georeferenced |
 | 6 | **Slope Analysis** | `slope` | Gradient → degrees; stats; flat/moderate/steep/very-steep breakdown; heatmap PNG |

@@ -2,7 +2,7 @@
 
 ## Single-View Height Estimation & Interactive 3D Terrain Reconstruction
 
-> **Smart India Hackathon 2026 — Problem Statement #26175 (ISRO)**
+> **Smart India Hackathon 2026 ï¿½ Problem Statement #26175 (ISRO)**
 > Theme: *Disaster Management*
 > Official reference repository: <https://github.com/IMG-PROCESS-SAC/SIH2026/>
 
@@ -30,7 +30,7 @@ height from a single image and exposing outputs through a practical web
 workflow.
 
 Core workflow:
-1. Upload JPG/PNG/TIFF/GeoTIFF (or use demo data).
+1. Upload JPG/PNG/TIFF/GeoTIFF.
 2. Auto-detect georeferencing metadata.
 3. Run **Depth Anything V2** for dense relative depth.
 4. Optionally calibrate using DEM/GCP references.
@@ -56,11 +56,11 @@ Core workflow:
 
 ## Repository Structure
 
-- `frontend/` — Next.js + React + R3F UI/client
-- `backend/app/` — FastAPI services and pipeline
-- `backend/requirements.txt` — backend dependencies
-- `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` — deployment
-- `docs/` — architecture, API, calibration, limitations, visualization notes
+- `frontend/` ï¿½ Next.js + React + R3F UI/client
+- `backend/app/` ï¿½ FastAPI services and pipeline
+- `backend/requirements.txt` ï¿½ backend dependencies
+- `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` ï¿½ deployment
+- `docs/` ï¿½ architecture, API, calibration, limitations, visualization notes
 
 ---
 
