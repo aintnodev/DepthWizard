@@ -86,14 +86,10 @@ export const useJobStore = create<JobState>((set) => ({
 /** Global UI flag so any page can hint whether the backend is reachable. */
 interface HealthState {
   backendOnline: boolean | null;
-  depthMode: "ai" | "fallback" | null;
   setBackendOnline: (online: boolean) => void;
-  setDepthMode: (mode: "ai" | "fallback") => void;
 }
 
 export const useHealthStore = create<HealthState>((set) => ({
   backendOnline: null,
-  depthMode: null,
   setBackendOnline: (backendOnline) => set({ backendOnline }),
-  setDepthMode: (depthMode) => set({ depthMode }),
 }));

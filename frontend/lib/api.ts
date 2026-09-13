@@ -96,8 +96,6 @@ export const api = {
       }),
     }),
 
-  demo: () => request<UploadResponse>("/api/demo", { method: "POST" }),
-
   statistics: (jobId: string) =>
     request<StatisticsResponse>(`/api/statistics/${jobId}`),
 
@@ -148,15 +146,6 @@ export const api = {
       body: form,
     });
   },
-
-  validateDemo: (jobId: string, estimated?: string) =>
-    request<ValidateResponse>("/api/validate-demo", {
-      method: "POST",
-      body: JSON.stringify({
-        job_id: jobId,
-        estimated: estimated ?? null,
-      }),
-    }),
 };
 
 /** Fetch + decode the zlib/base64 height map from the backend mesh.json. */

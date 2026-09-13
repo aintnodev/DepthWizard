@@ -22,7 +22,7 @@ const tech = [
       "Depth Anything V2",
       "Hugging Face Transformers",
       "PyTorch (CPU/GPU auto)",
-      "Graceful DEMO fallback mode",
+      "Real inference on every job",
     ],
   },
   {

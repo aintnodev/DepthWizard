@@ -32,13 +32,12 @@ import { formatNumber } from "@/lib/utils";
 export function DashboardClient() {
   const searchParams = useSearchParams();
   const jobFromQuery = searchParams.get("job");
-  const autostart = searchParams.get("autostart") === "1";
   const { stats, result, jobId, statistics } = useJobStore();
   const [localResult, setLocalResult] = useState<JobResult | null>(null);
 
   const activeJob = jobFromQuery ?? jobId;
 
-  useJobPolling(activeJob, !!jobFromQuery || autostart);
+  useJobPolling(activeJob, !!jobFromQuery);
 
   // Fetch the full result payload (file URLs) once available.
   useEffect(() => {
@@ -322,7 +321,7 @@ function EmptyState() {
         <FileImage className="h-12 w-12 text-cyan-300 mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-2">No job selected</h1>
         <p className="text-muted-foreground text-sm mb-8">
-          Upload an image or load the built-in demo to see the analysis dashboard.
+          Upload an image to see the analysis dashboard.
         </p>
         <div className="flex justify-center gap-3">
           <Button asChild>

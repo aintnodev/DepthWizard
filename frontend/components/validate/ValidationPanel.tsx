@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import {
   Activity,
   FileWarning,
-  FlaskConical,
   Loader2,
   Ruler,
   UploadCloud,
@@ -17,7 +16,6 @@ import { useJobStore } from "@/store/jobStore";
 import { useJobPolling } from "@/hooks/useJobPolling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatNumber } from "@/lib/utils";
 
@@ -31,23 +29,6 @@ export function ValidationPanel() {
   const [validating, setValidating] = useState(false);
   const [result, setResult] = useState<ValidateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const runDemo = useCallback(async () => {
-    if (!activeJob) return;
-    setValidating(true);
-    setError(null);
-    try {
-      const res = await api.validateDemo(activeJob);
-      setResult(res);
-      toast.success(res.available ? "Validation complete" : "No overlap found");
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "Validation failed.";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setValidating(false);
-    }
-  }, [activeJob]);
 
   const onUploadReference = useCallback(
     async (file: File | undefined | null) => {
@@ -103,7 +84,7 @@ export function ValidationPanel() {
                 </span>
                 <p className="text-muted-foreground text-xs mt-1">
                   Upload a reference DEM GeoTIFF (SRTM or similar) covering the
-                  same area, or run the synthetic demo reference below.
+                  same area as the processed image.
                 </p>
               </div>
             </div>
@@ -122,19 +103,6 @@ export function ValidationPanel() {
                 Upload reference GeoTIFF
               </Button>
             </label>
-            <Button
-              variant="glow"
-              size="sm"
-              disabled={!activeJob || validating}
-              onClick={runDemo}
-            >
-              {validating ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              ) : (
-                <FlaskConical className="h-4 w-4 mr-1.5" />
-              )}
-              Use synthetic demo reference
-            </Button>
           </div>
 
           {error && (
@@ -170,7 +138,6 @@ function MetricsCard({ result }: { result: ValidateResponse }) {
       </Card>
     );
   }
-  const isDemo = result.message.includes("SYNTHETIC");
   const metricItems = [
     { label: "RMSE", value: `${formatNumber(m.rmse, 2)} m` },
     { label: "MAE", value: `${formatNumber(m.mae, 2)} m` },
@@ -184,7 +151,6 @@ function MetricsCard({ result }: { result: ValidateResponse }) {
           <Activity className="h-4 w-4 text-cyan-300" />
           Validation Results
         </CardTitle>
-        {isDemo && <Badge variant="warning">Synthetic demo reference</Badge>}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -207,9 +173,7 @@ function MetricsCard({ result }: { result: ValidateResponse }) {
           <p>• {result.message}</p>
           <p>
             • These metrics describe agreement with the supplied reference —
-            {isDemo
-              ? " the reference itself is synthetic and NOT a real-world measurement."
-              : " accuracy on this scene only, not a global guarantee."}
+            accuracy on this scene only, not a global guarantee.
           </p>
         </div>
       </CardContent>

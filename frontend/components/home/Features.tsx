@@ -17,7 +17,7 @@ const features = [
   {
     icon: Cpu,
     title: "Monocular AI depth",
-    text: "Pretrained Depth Anything V2 via Hugging Face Transformers with a labelled fallback mode when the model is unavailable.",
+    text: "Pretrained Depth Anything V2 via Hugging Face Transformers — real inference on every job, no synthetic substitutes.",
   },
   {
     icon: Map,

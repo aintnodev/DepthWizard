@@ -11,10 +11,9 @@ import { useJobPolling } from "@/hooks/useJobPolling";
 function UploadContent() {
   const searchParams = useSearchParams();
   const jobFromQuery = searchParams.get("job");
-  const autostart = searchParams.get("autostart") === "1";
   const { stats, result, jobId } = useJobStore();
 
-  useJobPolling(jobFromQuery ?? jobId, !!jobFromQuery || autostart);
+  useJobPolling(jobFromQuery ?? jobId, !!jobFromQuery);
 
   const activeJobId = jobFromQuery ?? jobId;
 

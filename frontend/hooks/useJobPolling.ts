@@ -75,10 +75,9 @@ export function useBackendHealth() {
     let cancelled = false;
     api
       .health()
-      .then((h) => {
+      .then(() => {
         if (cancelled) return;
         useHealthStore.getState().setBackendOnline(true);
-        useHealthStore.getState().setDepthMode(h.depth_mode);
       })
       .catch(() => {
         if (cancelled) return;

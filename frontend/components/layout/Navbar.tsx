@@ -23,7 +23,6 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   useBackendHealth();
   const backendOnline = useHealthStore((s) => s.backendOnline);
-  const depthMode = useHealthStore((s) => s.depthMode);
 
   useEffect(() => {
     setOpen(false);
@@ -86,11 +85,7 @@ export function Navbar() {
                   : "bg-emerald-400 animate-pulseSoft"
               )}
             />
-            {backendOnline === false
-              ? "Backend offline"
-              : depthMode === "fallback"
-                ? "Circuit: DEMO"
-                : "Backend online"}
+            {backendOnline === false ? "Backend offline" : "Backend online"}
           </div>
           <Button asChild size="sm" variant="glow">
             <Link href="/upload">

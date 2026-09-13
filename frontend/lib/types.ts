@@ -1,5 +1,7 @@
 // DEPTHWIZARD shared frontend types (mirror of the backend schemas)
 
+/** "ai" = real model ready; "fallback" = model could NOT be loaded (jobs will
+ * fail) — the backend never produces synthetic data. */
 export type DepthMode = "ai" | "fallback";
 export type JobStatus = "queued" | "processing" | "completed" | "error";
 export type StageState = "pending" | "processing" | "completed" | "error";
@@ -11,7 +13,6 @@ export interface HealthResponse {
   depth_mode: DepthMode;
   model_name: string | null;
   device: string;
-  demo_file: string | null;
 }
 
 export interface UploadResponse {

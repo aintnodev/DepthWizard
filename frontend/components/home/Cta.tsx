@@ -20,8 +20,8 @@ export function Cta() {
           decision-ready terrain
         </h2>
         <p className="relative mt-4 text-muted-foreground max-w-xl mx-auto">
-          Upload an image — or explore the bundled demo — and fly through the
-          reconstructed 3D world in seconds.
+          Upload an image and fly through the reconstructed 3D world in
+          seconds.
         </p>
         <div className="relative mt-8 flex flex-col sm:flex-row justify-center gap-4">
           <Button asChild size="lg" className="gap-2 text-base">

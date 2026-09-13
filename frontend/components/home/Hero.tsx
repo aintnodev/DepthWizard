@@ -5,14 +5,12 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   Boxes,
-  PlayCircle,
   Radar,
   Satellite,
   Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useDemoLoader } from "@/lib/demo";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -24,8 +22,6 @@ const fadeUp = {
 };
 
 export function Hero() {
-  const { loadDemo, loading } = useDemoLoader();
-
   return (
     <section className="relative overflow-hidden">
       {/* background glow rings */}
@@ -76,16 +72,6 @@ export function Hero() {
               <Boxes className="h-5 w-5" />
               Start Reconstruction
             </Link>
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="gap-2 text-base"
-            onClick={loadDemo}
-            disabled={loading}
-          >
-            <PlayCircle className="h-5 w-5 text-cyan-300" />
-            {loading ? "Loading demo…" : "Load Demo"}
           </Button>
         </motion.div>
 
