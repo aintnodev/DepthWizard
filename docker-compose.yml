@@ -19,7 +19,6 @@ services:
     environment:
       - DW_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - DW_MAX_UPLOAD_MB=30
-      - DW_FORCE_FALLBACK=false
       # Runs CPU inference by default and clearly reports the device via
       # /api/health ("device": "cpu"). Set to "1" only with the deploy block.
       - NVIDIA_VISIBLE_DEVICES=void

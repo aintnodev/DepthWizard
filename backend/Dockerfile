@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System deps needed by rasterio/shapely wheels (fallback if no wheel exists)
+# System deps needed by rasterio/shapely wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ libglib2.0-0 libgl1 curl \
     && rm -rf /var/lib/apt/lists/*
@@ -15,13 +15,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY backend/requirements.txt ./backend/
 RUN pip install --upgrade pip && pip install -r backend/requirements.txt
 
-# Copy application code + demo image
+# Copy application code
 COPY backend/app ./app
-COPY demo/demo_rgb.jpg /demo/demo_rgb.jpg
 
 # Jobs artefacts + HF weight cache
 RUN mkdir -p /app/data/jobs
-ENV DW_DEMO_IMAGE_PATH=/demo/demo_rgb.jpg
 
 EXPOSE 8000
 
